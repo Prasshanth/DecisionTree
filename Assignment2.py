@@ -6,19 +6,21 @@ class Node:
     leftNode = None
     rightNode = None
     label = ""
+    majorityClass = ""
 
-    def __init__(self, attribute, leftNode, rightNode, label):
+    def __init__(self, attribute, leftNode, rightNode, label, majorityClass):
         self.attribute = attribute
         self.leftNode = leftNode
         self.rightNode = rightNode
         self.label = label
+        self.majorityClass = majorityClass
 
 
 #Input: S is a list of entries in the data for which the entropy is to be calculated
 #Output: Entropy for the list of entries given as input
 def entropy(S):
-    numZeros = 0
-    numOnes = 0
+    numZeros = 0.0
+    numOnes = 0.0
     total = 0.0
     for value in S:
         total += 1
@@ -26,8 +28,8 @@ def entropy(S):
             numZeros += 1
         else:
             numOnes += 1
-    valueOne = 0
-    valueZero = 0
+    valueOne = 0.0
+    valueZero = 0.0
     if numOnes != 0:
         valueOne = numOnes/total * math.log(numOnes/total, 2)
     if numZeros != 0:
@@ -61,15 +63,21 @@ def attributeSubset(S, attribute, value):
 #Output: Information gain for the attribute calculated on the given entries
 def informationGain(S, attribute):
     indexOfAttribute = columnToIndexMapping[attribute]
-    sEntropy = entropy(S)
-    subsetOne = attributeSubset(S, attribute, '0')
-    subsetZero = attributeSubset(S, attribute, '1')
+    sEntropy = float(entropy(S))
+    subsetOne = attributeSubset(S, attribute, '1')
+    subsetZero = attributeSubset(S, attribute, '0')
+    s1Len = float(len(subsetOne))
+    s0Len = float(len(subsetZero))
+    sLen = float(len(S))
     #if len(subsetOne) == 0 or len(subsetZero) == 0:
      #   print S
       #  print attribute
        # print attributes
-    
-    return sEntropy - len(subsetOne)/len(S) * entropy(subsetOne) - len(subsetZero)/len(S) * entropy(subsetZero)
+    #print "sEntropy: " + str(sEntropy)
+    #print "part 1: " + str(len(subsetOne)/len(S) * entropy(subsetOne))
+    #print "part 0: " + str(len(subsetZero)/len(S) * entropy(subsetZero))
+
+    return sEntropy - (s1Len/sLen) * entropy(subsetOne) - (s0Len/sLen) * entropy(subsetZero)
 
 #Input: List of entries S 
 #Output: True if class for all entries is positive, False if not
@@ -107,18 +115,28 @@ def mostCommonClass(S):
 def bestAttribute(S, attributes):
     bestAttribute = attributes[0]
     bestInfoGain = informationGain(S, bestAttribute)
+    infoGains = []
     for attribute in attributes:
         attributeInfoGain = informationGain(S, attribute)
+        infoGains.append(attributeInfoGain)
         if attributeInfoGain > bestInfoGain:
             bestInfoGain = attributeInfoGain
             bestAttribute = attribute
     #print "best attribute = " + bestAttribute
+    allPure = True
+    for value in infoGains:
+        if value != 0.0 and value != 1.0:
+            allPure = False
+    #print infoGains
+    if allPure:
+        print infoGains
+        print attributes
     return bestAttribute
 
 #Input: List of entries S, list of attributes
 #Output: Decision tree for the list of entries
 def ID3(S, attributes):
-    rootNode = Node("", None, None, "")
+    rootNode = Node("", None, None, "", mostCommonClass(S))
     if allSamplesPositive(S):
         rootNode.label = "1"
         return rootNode
@@ -135,13 +153,13 @@ def ID3(S, attributes):
 
     SViLeft = attributeSubset(S, A, "0")
     if len(SViLeft) == 0:
-        rootNode.leftNode = Node("", None, None, mostCommonClass(S))
+        rootNode.leftNode = Node("", None, None, mostCommonClass(S), mostCommonClass(S))
     else:
         rootNode.leftNode = ID3(SViLeft, list(attributes))
 
     SViRight = attributeSubset(S, A, "1")
     if len(SViRight) == 0:
-        rootNode.rightNode = Node("", None, None, mostCommonClass(S))
+        rootNode.rightNode = Node("", None, None, mostCommonClass(S), mostCommonClass(S))
     else:
         rootNode.rightNode = ID3(SViRight, list(attributes))
     
@@ -185,7 +203,6 @@ def returnPrediction(treeRoot, entry):
         else:    
             return returnPrediction(treeRoot.rightNode, entry)
 
-
 trainingSetFile = open("training_set.csv", "r")
 columnHeadings = trainingSetFile.readline().split(",")
 columnHeadings = columnHeadings[0:-1]
@@ -219,7 +236,7 @@ i = 0
 c = 0.0
 for sample in testData:
     i += 1
-    print returnPrediction(decisionTree, sample) + " " + sample[-1]
+    #print returnPrediction(decisionTree, sample) + " " + sample[-1]
     if returnPrediction(decisionTree, sample) == sample[-1]:
         c += 1
 
