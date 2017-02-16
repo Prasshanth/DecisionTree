@@ -165,6 +165,22 @@ def ID3(S, attributes):
     
     return rootNode
 
+def numberOfNodes(treeRoot):
+    if treeRoot == None:
+        return 0
+    else:
+        return 1 + numberOfNodes(treeRoot.rightNode) + numberOfNodes(treeRoot.leftNode)
+
+def treeAccuracy(treeRoot, SampleSet):
+    i = 0
+    c = 0.0
+    for sample in SampleSet:
+        i += 1
+        #print returnPrediction(decisionTree, sample) + " " + sample[-1]
+        if returnPrediction(treeRoot, sample) == sample[-1]:
+            c += 1
+    return c/i * 100
+
 def parse(treeRoot):
     parseTree(treeRoot, 0)
 
@@ -242,7 +258,8 @@ for sample in testData:
 
 print "total = " + str(i)
 print "numCorrect = " + str(c)
-print "accuracy = " + str(c/i * 100)
+print "accuracy = " + str(treeAccuracy(decisionTree, testData))
+print "number of nodes = " + str(numberOfNodes(decisionTree))
 
     
 
